@@ -126,3 +126,31 @@ Details (pro Datei, gekürzt):
 - localizations.fr.description (fr) | format_space_before_newline
   BEFORE: Découvrez la récitation émouvante de la Sourate La Table Servie par le Cheikh Maher Al-Muaiqly. Cette vidéo présente le texte coranique ave…
   AFTER:  Découvrez la récitation émouvante de la Sourate La Table Servie par le Cheikh Maher Al-Muaiqly. Cette vidéo présente le texte coranique ave…
+
+
+=== Titel-Suffix hinzugefügt (With English Translation) 2026-02-18T16:48:16 ===
+Definitionen pro Sprache:
+- ar: مع الترجمة الإنجليزية
+- bn: ইংরেজি অনুবাদসহ
+- de: Mit englischer Übersetzung
+- en: With English Translation
+- fa: با ترجمهٔ انگلیسی
+- fr: Avec traduction anglaise
+- id: Dengan terjemahan bahasa Inggris
+- ms: Dengan terjemahan bahasa Inggeris
+- ru: С английским переводом
+- tr: İngilizce Çeviri ile
+- ur: انگریزی ترجمے کے ساتھ
+Geänderte Dateien: 114
+Geänderte Titel pro Sprache:
+- en: 114
+- de: 114
+- fr: 114
+- tr: 114
+- ru: 114
+- ar: 114
+- fa: 114
+- ur: 114
+- bn: 114
+- id: 114
+- ms: 114
