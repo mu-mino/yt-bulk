@@ -1,0 +1,48 @@
+{
+    "localizations": {
+        "ar": {
+            "title": "سورة المائدة | تلاوة هادئة خاشعة | ماهر المعيقلي",
+            "description": "استمع إلى تلاوة خاشعة من سورة المائدة بصوت الشيخ ماهر المعيقلي. يتضمن الفيديو نص القرآن الكريم مع ترجمة معاني القرآن باللغة الإنجليزية (Dr. Al-Hilali & Dr. Muhsin Khan). \n\n#القرآن #سورة_المائدة #ماهر_المعيقلي"
+        },
+        "en": {
+            "title": "Surah The Table Spread | Emotional & Calm Recitation | Maher Al-Muaiqly",
+            "description": "Experience the heart-touching recitation of Surah The Table Spread by Sheikh Maher Al-Muaiqly. This video features a calm visual background with the English translation by Dr. Muhammad Taqi-ud-Din Al-Hilali & Dr. Muhammad Muhsin Khan. \n\n#Quran #SurahTheTableSpread #MaherAlMuaiqly"
+        },
+        "id": {
+            "title": "Surah Al-Ma'idah | Lantunan Merdu & Tenang | Maher Al-Muaiqly",
+            "description": "Dengarkan lantunan ayat suci Surah Al-Ma'idah yang sangat merdu oleh Syekh Maher Al-Muaiqly. Video ini menampilkan teks Al-Qur'an dengan terjemahan bahasa Inggris oleh Dr. Al-Hilali & Dr. Muhsin Khan. \n\n#AlQuran #SurahAl-Ma'idah #MaherAlMuaiqly"
+        },
+        "ur": {
+            "title": "سورہ المائدہ | پرسکون تلاوت | شیخ ماہر المعيقلی",
+            "description": "شیخ ماہر المعیقلی کی آواز میں سورہ المائدہ کی خوبصورت تلاوت سماعت فرمائیں۔ اس ویڈیو میں قرآن پاک کے متن کے ساتھ ڈاکٹر الہالی اور ڈاکٹر محسن خان کا انگریزی ترجمہ شامل ہے۔ \n\n#قرآن #سورہ #ماہر_المعیقلی"
+        },
+        "bn": {
+            "title": "সূরা আল-মায়িদাহ | আবেগপূর্ণ ও শান্ত তেلاওয়াত | মাহের আল-মুয়াইকলি",
+            "description": "শেখ মাহের আল-মুয়াইকলির কণ্ঠে সূরা আল-মায়িদাহ-এর হৃদয়স্পর্শী তেলাওয়াত শুনুন। এই ভিডিওতে ড. আল-হিলালি এবং ড. মহসিন খানের ইংরেজি অনুবাদসহ কুরআনের আয়াত রয়েছে। \n\n#কুরআন #সূরা #মাহেরআলমুয়াইকলি"
+        },
+        "tr": {
+            "title": "Maide Suresi | Huzur Veren Tilavet | Mahir el-Muaykili",
+            "description": "Şeyh Mahir el-Muaykili'den Maide Suresi'nin kalbe dokunan kıraatini dinleyin. Bu video, Dr. Al-Hilali ve Dr. Muhsin Khan'ın İngilizce meali ile birlikte Kur'an metnini içermektedir. \n\n#Kuran #Sure #MahirElMuaykili"
+        },
+        "fr": {
+            "title": "Sourate La Table Servie | Récitation Calme & Émouvante | Maher Al-Muaiqly",
+            "description": "Découvrez la récitation émouvante de la Sourate La Table Servie par le Cheikh Maher Al-Muaiqly. Cette vidéo présente le texte coranique avec la traduction anglaise du Dr Al-Hilali et du Dr Muhsin Khan. \n\n#Coran #Sourate #MaherAlMuaiqly"
+        },
+        "fa": {
+            "title": "سوره مائده | تلاوت آرام و دلنشین | ماهر المعیقلی",
+            "description": "تلاوت دلنشین سوره مائده با صدای شیخ ماهر المعیقلی. این ویدیو شامل متن قرآن کریم همراه با ترجمه انگلیسی دکتر الهلالی و دکتر محسن خان است. \n\n#قرآن #سوره #ماهر_المعیقلی"
+        },
+        "ms": {
+            "title": "Surah Al-Ma'idah | Bacaan Tenang & Syahdu | Maher Al-Muaiqly",
+            "description": "Saksikan bacaan indah Surah Al-Ma'idah oleh Syeikh Maher Al-Muaiqly. Video ini memaparkan teks Al-Quran berserta terjemahan bahasa Inggeris oleh Dr. Al-Hilali & Dr. Muhsin Khan. \n\n#AlQuran #Surah #MaherAlMuaiqly"
+        },
+        "de": {
+            "title": "Sure Der Tisch | Emotionale Rezitation | Maher Al-Muaiqly",
+            "description": "Erlebe die herzberührende Rezitation von Sure Der Tisch durch Sheikh Maher Al-Muaiqly. Dieses Video zeigt den Korantext mit der englischen Übersetzung von Dr. Al-Hilali & Dr. Muhsin Khan. \n\n#Koran #Sure #MaherAlMuaiqly"
+        },
+        "ru": {
+            "title": "Сура Трапеза | Красивое и спокойное чтение | Махер аль-Муайкли",
+            "description": "Слушайте трогательное чтение суры Трапеза шейхом Махером аль-Муайкли. Это видео содержит текст Корана с английским переводом доктора Аль-Хилали и доктора Мухсина Хана. \n\n#Коран #Сура #МахерАльМуайкли"
+        }
+    }
+}
