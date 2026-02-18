@@ -154,3 +154,35 @@ Geänderte Titel pro Sprache:
 - bn: 114
 - id: 114
 - ms: 114
+
+
+=== EN Titel: Transliteration nach 'Surah' eingefügt 2026-02-18T16:48:40 ===
+Quelle: `localizations.id.title` (Transliteration nach 'Surah ')
+Geänderte EN-Titel: 92
+Übersprungen (bereits transliteriert): 22
+
+Beispiele:
+- metadata_output/sura_001.json | localizations.en.title
+  BEFORE: Surah The Opening | Emotional & Calm Recitation | Maher Al-Muaiqly | With English Translation
+  AFTER:  Surah Al-Fatihah | The Opening | Emotional & Calm Recitation | Maher Al-Muaiqly | With English Translation
+- metadata_output/sura_002.json | localizations.en.title
+  BEFORE: Surah The Cow | Emotional & Calm Recitation | Maher Al-Muaiqly | With English Translation
+  AFTER:  Surah Al-Baqarah | The Cow | Emotional & Calm Recitation | Maher Al-Muaiqly | With English Translation
+- metadata_output/sura_003.json | localizations.en.title
+  BEFORE: Surah Family of Imran | Emotional & Calm Recitation | Maher Al-Muaiqly | With English Translation
+  AFTER:  Surah Ali Imran | Family of Imran | Emotional & Calm Recitation | Maher Al-Muaiqly | With English Translation
+- metadata_output/sura_004.json | localizations.en.title
+  BEFORE: Surah The Women | Emotional & Calm Recitation | Maher Al-Muaiqly | With English Translation
+  AFTER:  Surah An-Nisa | The Women | Emotional & Calm Recitation | Maher Al-Muaiqly | With English Translation
+- metadata_output/sura_005.json | localizations.en.title
+  BEFORE: Surah The Table Spread | Emotional & Calm Recitation | Maher Al-Muaiqly | With English Translation
+  AFTER:  Surah Al-Ma'idah | The Table Spread | Emotional & Calm Recitation | Maher Al-Muaiqly | With English Translation
+- metadata_output/sura_006.json | localizations.en.title
+  BEFORE: Surah The Cattle | Emotional & Calm Recitation | Maher Al-Muaiqly | With English Translation
+  AFTER:  Surah Al-An'am | The Cattle | Emotional & Calm Recitation | Maher Al-Muaiqly | With English Translation
+- metadata_output/sura_008.json | localizations.en.title
+  BEFORE: Surah The Spoils of War | Emotional & Calm Recitation | Maher Al-Muaiqly | With English Translation
+  AFTER:  Surah Al-Anfal | The Spoils of War | Emotional & Calm Recitation | Maher Al-Muaiqly | With English Translation
+- metadata_output/sura_009.json | localizations.en.title
+  BEFORE: Surah Repentance | Emotional & Calm Recitation | Maher Al-Muaiqly | With English Translation
+  AFTER:  Surah At-Taubah | Repentance | Emotional & Calm Recitation | Maher Al-Muaiqly | With English Translation
