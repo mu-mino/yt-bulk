@@ -1,0 +1,7 @@
+Fehlerprotokoll (Start)
+Automatische Korrekturen: Duplikate/Tippfehler
+- 'سورہ سورۃ' -> 'سورہ' | occurrences: 56
+- 'سوره سوره' -> 'سوره' | occurrences: 32
+- 'Suresi Suresi' -> 'Suresi' | occurrences: 172
+- 'Surah Surah' -> 'Surah' | occurrences: 6
+- 'Calm1' -> 'Calm' | occurrences: 1
