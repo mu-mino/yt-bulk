@@ -11,3 +11,8 @@ Automatische Korrekturen: Duplikate/Tippfehler
 - de_sheikh_to_scheich (de): 'Sheikh' -> 'Scheich' | occurrences: 114
 - ur_name_spelling (ur): 'المعيقلی' -> 'المعیقلی' | occurrences: 114
 Geänderte Dateien: 114
+
+
+=== Whitespace: space-before-newline entfernt 2026-02-18T16:47:14 ===
+- format_space_before_newline: 1254
+Geänderte Dateien: 114
