@@ -5,3 +5,9 @@ Automatische Korrekturen: Duplikate/Tippfehler
 - 'Suresi Suresi' -> 'Suresi' | occurrences: 172
 - 'Surah Surah' -> 'Surah' | occurrences: 6
 - 'Calm1' -> 'Calm' | occurrences: 1
+
+
+=== Schreibweisen vereinheitlicht 2026-02-18T16:46:40 ===
+- de_sheikh_to_scheich (de): 'Sheikh' -> 'Scheich' | occurrences: 114
+- ur_name_spelling (ur): 'المعيقلی' -> 'المعیقلی' | occurrences: 114
+Geänderte Dateien: 114
