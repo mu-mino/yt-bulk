@@ -1,0 +1,29 @@
+import sqlite3
+
+def get_surah_names():
+    # Pfad zu deiner Datenbank
+    db_path = '/home/muhammed-emin-eser/desk/apps/classify/tools/ML/quran.db'
+    
+    try:
+        # Verbindung aufbauen
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        
+        # SQL-Abfrage: Holt Nummer und Name aus der Tabelle 'sura'
+        query = "SELECT sura_number, sura_name FROM sura ORDER BY sura_number ASC"
+        cursor.execute(query)
+        
+        # Alle Ergebnisse abrufen
+        surahs = cursor.fetchall()
+        
+        for number, name in surahs:
+            print(f"Sure {number}: {name}")
+            
+    except sqlite3.Error as e:
+        print(f"Datenbankfehler: {e}")
+    finally:
+        if conn:
+            conn.close()
+
+if __name__ == "__main__":
+    get_surah_names()
