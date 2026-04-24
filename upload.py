@@ -1,7 +1,6 @@
 import os
 import json
 import re
-import subprocess
 import time
 import random
 try:
@@ -25,6 +24,8 @@ import pickle
 # Die Berechtigung, die du zum Hochladen benötigst
 SCOPES = ['https://www.googleapis.com/auth/youtube.upload']
 UPLOAD_LOG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "upload_log.jsonl")
+DEFAULT_THUMBNAIL_DIR = "/home/muhammed-emin-eser/desk/din/OpenCV/thumbnails_batch_no_outline"
+THUMBNAIL_EXTENSIONS = (".png", ".jpg", ".jpeg", ".webp")
 
 _PIPE_RE = re.compile(r"\s*\|\s*")
 _WS_RE = re.compile(r"\s+")
@@ -270,6 +271,42 @@ def build_youtube_tags(metadata):
     return tags
 
 
+def _find_matching_thumbnail(thumbnail_dir: str, sura_num: int) -> str:
+    """
+    Find a thumbnail file in `thumbnail_dir` that matches the sura number prefix.
+
+    Expected filenames: "001_Al-Fatiha.png", "114_An-Nas.png", etc.
+    """
+    if not thumbnail_dir:
+        raise ValueError("thumbnail_dir is required")
+    if not os.path.isdir(thumbnail_dir):
+        raise FileNotFoundError(f"Thumbnail dir not found: {thumbnail_dir}")
+
+    prefix = f"{int(sura_num):03d}_"
+    matches = []
+    for name in os.listdir(thumbnail_dir):
+        if not name.startswith(prefix):
+            continue
+        if not name.lower().endswith(THUMBNAIL_EXTENSIONS):
+            continue
+        path = os.path.join(thumbnail_dir, name)
+        if os.path.isfile(path):
+            matches.append(path)
+
+    matches.sort()
+    if not matches:
+        raise FileNotFoundError(
+            f"No thumbnail found for sura {int(sura_num):03d} in {thumbnail_dir} "
+            f"(expected prefix {prefix}*{THUMBNAIL_EXTENSIONS})"
+        )
+    if len(matches) > 1:
+        raise RuntimeError(
+            f"Multiple thumbnails found for sura {int(sura_num):03d}: {matches}. "
+            "Keep exactly one file per sura."
+        )
+    return matches[0]
+
+
 def get_authenticated_service():
     if InstalledAppFlow is None or build is None:
         raise RuntimeError(
@@ -297,7 +334,13 @@ def get_authenticated_service():
 # NOTE: Do not create the YouTube service at import time.
 # The CLI entrypoint below wires in the authenticated client.
 
-def upload_video_with_metadata_and_thumbnail(youtube, video_file_path, sura_num, debug=False):
+def upload_video_with_metadata_and_thumbnail(
+    youtube,
+    video_file_path,
+    sura_num,
+    debug=False,
+    thumbnail_dir: str = DEFAULT_THUMBNAIL_DIR,
+):
     if MediaFileUpload is None:
         raise RuntimeError(
             "googleapiclient is not installed. "
@@ -343,6 +386,10 @@ def upload_video_with_metadata_and_thumbnail(youtube, video_file_path, sura_num,
     if was_truncated:
         print(f"NOTE: Title exceeded {YOUTUBE_TITLE_MAX_LEN} chars and was truncated: {title}")
 
+    thumbnail_path = _find_matching_thumbnail(thumbnail_dir, sura_num)
+    if os.path.getsize(thumbnail_path) <= 0:
+        raise RuntimeError(f"Thumbnail file is empty: {thumbnail_path}")
+
     description = _fit_youtube_description(base.get("description", ""))
     sanitized_localizations = _sanitize_localizations(
         localizations,
@@ -371,109 +418,55 @@ def upload_video_with_metadata_and_thumbnail(youtube, video_file_path, sura_num,
         print("DEBUG: request body preview:")
         print(json.dumps(body, ensure_ascii=False, indent=2))
 
-    # 2. Video Upload starten
-    print(f"Uploading Video: {os.path.basename(video_file_path)}...")
-    media = MediaFileUpload(video_file_path, chunksize=-1, resumable=True)
+    try:
+        # 2. Video Upload starten
+        print(f"Uploading Video: {os.path.basename(video_file_path)}...")
+        media = MediaFileUpload(video_file_path, chunksize=-1, resumable=True)
 
-    insert_request = youtube.videos().insert(
-        part="snippet,status,localizations",
-        body=body,
-        media_body=media
-    )
+        insert_request = youtube.videos().insert(
+            part="snippet,status,localizations",
+            body=body,
+            media_body=media
+        )
 
-    # Resumable upload with retry/backoff for transient network issues/timeouts.
-    response = None
-    retries = 0
-    max_retries = 10
-    while response is None:
-        try:
-            status, response = insert_request.next_chunk()
-            if status is not None:
-                try:
+        # Resumable upload with retry/backoff for transient network issues/timeouts.
+        response = None
+        retries = 0
+        max_retries = 10
+        while response is None:
+            try:
+                status, response = insert_request.next_chunk()
+                if status is not None:
                     progress = int(status.progress() * 100)
                     print(f"Upload progress: {progress}%")
-                except Exception:
-                    pass
-        except Exception as e:
-            retryable = isinstance(e, TimeoutError)
-            if isinstance(e, HttpError):
-                code = getattr(getattr(e, "resp", None), "status", None)
-                retryable = code in (500, 502, 503, 504)
+            except Exception as e:
+                retryable = isinstance(e, TimeoutError)
+                if isinstance(e, HttpError):
+                    code = getattr(getattr(e, "resp", None), "status", None)
+                    retryable = code in (500, 502, 503, 504)
 
-            if not retryable or retries >= max_retries:
-                raise
+                if not retryable or retries >= max_retries:
+                    raise
 
-            retries += 1
-            sleep_s = min(2 ** retries, 60) + random.random()
-            print(f"Transient upload error ({type(e).__name__}); retry {retries}/{max_retries} in {sleep_s:.1f}s...")
-            time.sleep(sleep_s)
-
-    video_id = response['id']
-    print(f"Video erfolgreich hochgeladen! ID: {video_id}")
-
-    # 3. THUMBNAIL EXTRAKTION & UPLOAD
-    # Prefer embedded attached_pic if present; otherwise extract a frame to avoid failing.
-    temp_thumb = f"temp_thumb_{video_id}.png"
-    try:
-        def _pick_attached_pic_stream_index(path: str):
-            try:
-                proc = subprocess.run(
-                    ["ffprobe", "-v", "error", "-show_streams", "-of", "json", path],
-                    check=True,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True,
+                retries += 1
+                sleep_s = min(2 ** retries, 60) + random.random()
+                print(
+                    f"Transient upload error ({type(e).__name__}); retry {retries}/{max_retries} in {sleep_s:.1f}s..."
                 )
-            except Exception:
-                return None
+                time.sleep(sleep_s)
 
-            try:
-                import json as _json
-
-                data = _json.loads(proc.stdout or "{}")
-                for s in data.get("streams", []) or []:
-                    disp = (s.get("disposition") or {})
-                    if disp.get("attached_pic") == 1:
-                        idx = s.get("index")
-                        if isinstance(idx, int):
-                            return idx
-            except Exception:
-                return None
-            return None
-
-        attached_idx = _pick_attached_pic_stream_index(video_file_path)
-        if attached_idx is not None:
-            print("Extrahiere eingebettetes Thumbnail...")
-            subprocess.run(
-                ["ffmpeg", "-i", video_file_path, "-map", f"0:{attached_idx}", "-frames:v", "1", temp_thumb, "-y"],
-                check=True,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
-        else:
-            # Fallback: grab a representative frame (1s) so thumbnail upload can still succeed.
-            print("Kein eingebettetes Thumbnail gefunden; extrahiere Frame als Thumbnail...")
-            subprocess.run(
-                ["ffmpeg", "-ss", "1", "-i", video_file_path, "-frames:v", "1", temp_thumb, "-y"],
-                check=True,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
+        video_id = response['id']
+        print(f"Video erfolgreich hochgeladen! ID: {video_id}")
 
         # Thumbnail zu YouTube hochladen
         print(f"Lade Thumbnail für Video {video_id} hoch...")
         youtube.thumbnails().set(
             videoId=video_id,
-            media_body=MediaFileUpload(temp_thumb)
+            media_body=MediaFileUpload(thumbnail_path)
         ).execute(num_retries=5)
         print("Thumbnail erfolgreich gesetzt!")
-
-    except Exception as e:
-        # Fail fast so batch runs don't silently skip thumbnail issues.
-        raise RuntimeError(f"Thumbnail extraction/upload failed for video {video_id}: {e}") from e
     finally:
-        if os.path.exists(temp_thumb):
-            os.remove(temp_thumb)
+        pass
 
     return video_id
 
@@ -565,8 +558,16 @@ def _extract_sura_num(filename):
     return None
 
 
-def upload_videos_in_dir(youtube, video_dir, process_single=False, single_sura=None, debug=False):
-    uploaded = _load_uploaded_suras(UPLOAD_LOG_PATH)
+def upload_videos_in_dir(
+    youtube,
+    video_dir,
+    process_single=False,
+    single_sura=None,
+    debug=False,
+    ignore_upload_log=False,
+    thumbnail_dir: str = DEFAULT_THUMBNAIL_DIR,
+):
+    uploaded = set() if ignore_upload_log else _load_uploaded_suras(UPLOAD_LOG_PATH)
     entries = []
     for name in os.listdir(video_dir):
         file_path = os.path.join(video_dir, name)
@@ -578,16 +579,16 @@ def upload_videos_in_dir(youtube, video_dir, process_single=False, single_sura=N
         sura_num = _extract_sura_num(name)
         if sura_num is None:
             continue
-        if not process_single and sura_num in uploaded:
+        if not ignore_upload_log and (not process_single and sura_num in uploaded):
             continue
         entries.append((sura_num, name, file_path))
-    for sura_num, name, file_path in sorted(entries, key=lambda x: x[0], reverse=True):
+    for sura_num, name, file_path in sorted(entries, key=lambda x: x[0], reverse=False):
         if process_single and single_sura is not None and sura_num != single_sura:
             continue
 
         try:
             video_id = upload_video_with_metadata_and_thumbnail(
-                youtube, file_path, sura_num, debug=debug
+                youtube, file_path, sura_num, debug=debug, thumbnail_dir=thumbnail_dir
             )
             _append_upload_log(UPLOAD_LOG_PATH, sura_num, file_path, video_id)
         except (HttpError, ResumableUploadError) as e:
@@ -609,6 +610,16 @@ if __name__ == "__main__":
     parser.add_argument("--video-dir", required=True, help="Directory with video files.")
     parser.add_argument("--single-sura", type=int, help="Only upload one sura number for testing.")
     parser.add_argument("--debug", action="store_true", help="Preview request body before upload.")
+    parser.add_argument(
+        "--thumbnail-dir",
+        default=DEFAULT_THUMBNAIL_DIR,
+        help="Directory containing per-sura thumbnails like 001_Al-Fatiha.png.",
+    )
+    parser.add_argument(
+        "--ignore-upload-log",
+        action="store_true",
+        help="Do not skip already-uploaded suras from upload_log.jsonl (re-uploads everything from the start).",
+    )
     args = parser.parse_args()
 
     upload_videos_in_dir(
@@ -617,4 +628,6 @@ if __name__ == "__main__":
         process_single=args.single_sura is not None,
         single_sura=args.single_sura,
         debug=args.debug,
+        ignore_upload_log=args.ignore_upload_log,
+        thumbnail_dir=args.thumbnail_dir,
     )
