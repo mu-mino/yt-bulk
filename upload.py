@@ -24,7 +24,7 @@ import pickle
 # Die Berechtigung, die du zum Hochladen benötigst
 SCOPES = ['https://www.googleapis.com/auth/youtube.upload']
 UPLOAD_LOG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "upload_log.jsonl")
-DEFAULT_THUMBNAIL_DIR = "/home/muhammed-emin-eser/desk/din/OpenCV/thumbnails_batch_no_outline"
+DEFAULT_THUMBNAIL_DIR = None  # set via --thumbnail-dir CLI arg
 THUMBNAIL_EXTENSIONS = (".png", ".jpg", ".jpeg", ".webp")
 
 _PIPE_RE = re.compile(r"\s*\|\s*")
@@ -147,7 +147,7 @@ def _pick_video_title(metadata: dict, video_file_path: str, sura_num: int) -> tu
 
     if not normalized:
         basename = os.path.splitext(os.path.basename(video_file_path or ""))[0].strip()
-        normalized = basename or f"Surah {int(sura_num):03d}"
+        normalized = basename or f"Item {int(sura_num):03d}"
 
     fitted = _fit_youtube_title(normalized, max_len=YOUTUBE_TITLE_MAX_LEN)
     return fitted, len(fitted) != len(normalized)
@@ -200,71 +200,11 @@ def _cap_tags_by_total_chars(tags, max_total_chars=450):
 
 def build_youtube_tags(metadata):
     """
-    Build high-signal YouTube tags from our metadata_output conventions.
-
-    Expected EN title format (after our chat edits):
-      Surah <translit> | <english name> | Emotional & Calm Recitation | Maher Al-Muaiqly | With English Translation
+    Build YouTube tags from metadata["tags"] list.
+    Deduplicates case-insensitively and caps to YouTube's ~500-char limit.
     """
-    locs = (metadata or {}).get("localizations", {})
-    en_title = _normalize_pipes((locs.get("en") or {}).get("title", ""))
-    ar_title = _normalize_pipes((locs.get("ar") or {}).get("title", ""))
-
-    def extract_between(title, prefix):
-        if not title or prefix not in title:
-            return ""
-        after = title.split(prefix, 1)[1]
-        if " | " in after:
-            return after.split(" | ", 1)[0].strip()
-        return after.strip()
-
-    en_segs = en_title.split(" | ") if en_title else []
-    surah_translit = ""
-    surah_en_name = ""
-    if en_segs and en_segs[0].startswith("Surah "):
-        surah_translit = en_segs[0].replace("Surah ", "", 1).strip()
-    if len(en_segs) >= 2:
-        surah_en_name = en_segs[1].strip()
-
-    surah_ar_name = extract_between(ar_title, "سورة ")
-
-    # Ordered by priority: surah-specific terms first, then content/reciter, then broader discovery terms.
-    tags = [
-        surah_translit,
-        surah_en_name,
-        surah_ar_name,
-        f"Surah {surah_translit}" if surah_translit else "",
-        f"Surah {surah_en_name}" if surah_en_name else "",
-        "Quran",
-        "Qur'an",
-        "Al Quran",
-        "Quran Recitation",
-        "Surah Recitation",
-        "Murattal",
-        "Tilawah",
-        "Tilawat",
-        "Tajweed",
-        "Tarteel",
-        "Beautiful Recitation",
-        "Calm Quran",
-        "Relaxing Quran",
-        "Emotional Recitation",
-        "With English Translation",
-        "English Translation",
-        "Hilali Khan",
-        "Maher Al-Muaiqly",
-        "Maher al Muaiqly",
-        "Al-Muaiqly",
-        "Mahir",
-        "mahir",
-        "Kabe imami",
-        "Muaiqly",
-        "Islam",
-        "Islamic",
-        "Koran",
-        "القرآن",
-    ]
-
-    tags = _dedupe_tags(tags)
+    raw_tags = (metadata or {}).get("tags", [])
+    tags = _dedupe_tags(raw_tags)
     # The API's documented limit is 500 chars (counting commas and quoting tags with spaces).
     # Stay slightly under to reduce risk of edge-case rejections.
     tags = _cap_tags_by_total_chars(tags, max_total_chars=495)
@@ -340,19 +280,19 @@ def upload_video_with_metadata_and_thumbnail(
     sura_num,
     debug=False,
     thumbnail_dir: str = DEFAULT_THUMBNAIL_DIR,
+    metadata_dir: str = None,
 ):
     if MediaFileUpload is None:
         raise RuntimeError(
             "googleapiclient is not installed. "
             "Install dependencies (google-api-python-client) to upload."
         )
-    # 1. Metadaten aus JSON laden
-    sura_num_formatted = f"{int(sura_num):03d}"
-    json_path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        "metadata_output",
-        f"sura_{sura_num_formatted}.json",
-    )
+    if thumbnail_dir is None:
+        raise ValueError("thumbnail_dir is required")
+
+    item_num_formatted = f"{int(sura_num):03d}"
+    base_dir = metadata_dir or os.path.join(os.path.dirname(os.path.abspath(__file__)), "metadata_output")
+    json_path = os.path.join(base_dir, f"item_{item_num_formatted}.json")
 
     with open(json_path, 'r', encoding='utf-8') as f:
         metadata = json.load(f)
@@ -361,21 +301,7 @@ def upload_video_with_metadata_and_thumbnail(
     if not localizations:
         raise ValueError(f"Missing 'localizations' in metadata: {json_path}")
 
-    # Basis-Sprache für das Haupt-Snippet (YouTube erfordert Default-Werte)
-    # Wir nutzen 'en' als Standard, da es global am besten rankt
     base = localizations.get("en") or {}
-    ar_local = localizations.get("ar") or {}
-
-    def _extract_name(title, prefix):
-        if not title or prefix not in title:
-            return ""
-        after = title.split(prefix, 1)[1]
-        if " | " in after:
-            return after.split(" | ", 1)[0].strip()
-        return after.strip()
-
-    en_name = _extract_name(base.get("title", ""), "Surah ")
-    ar_name = _extract_name(ar_local.get("title", ""), "سورة ")
 
     # YouTube keywords/tags (bounded to avoid API rejections).
     all_tags = build_youtube_tags(metadata)
@@ -404,8 +330,8 @@ def upload_video_with_metadata_and_thumbnail(
             'description': description,
             'tags': all_tags,
             'categoryId': '27',  # Education
-            'defaultLanguage': 'en',
-            'defaultAudioLanguage': 'ar'
+            'defaultLanguage': metadata.get('default_language', 'en'),
+            'defaultAudioLanguage': metadata.get('default_audio_language', 'en')
         },
         'status': {
             'privacyStatus': 'public',
@@ -456,15 +382,14 @@ def upload_video_with_metadata_and_thumbnail(
                 time.sleep(sleep_s)
 
         video_id = response['id']
-        print(f"Video erfolgreich hochgeladen! ID: {video_id}")
+        print(f"Video uploaded. ID: {video_id}")
 
-        # Thumbnail zu YouTube hochladen
-        print(f"Lade Thumbnail für Video {video_id} hoch...")
+        print(f"Setting thumbnail for video {video_id}...")
         youtube.thumbnails().set(
             videoId=video_id,
             media_body=MediaFileUpload(thumbnail_path)
         ).execute(num_retries=5)
-        print("Thumbnail erfolgreich gesetzt!")
+        print("Thumbnail set.")
     finally:
         pass
 
@@ -566,6 +491,7 @@ def upload_videos_in_dir(
     debug=False,
     ignore_upload_log=False,
     thumbnail_dir: str = DEFAULT_THUMBNAIL_DIR,
+    metadata_dir: str = None,
 ):
     uploaded = set() if ignore_upload_log else _load_uploaded_suras(UPLOAD_LOG_PATH)
     entries = []
@@ -588,7 +514,8 @@ def upload_videos_in_dir(
 
         try:
             video_id = upload_video_with_metadata_and_thumbnail(
-                youtube, file_path, sura_num, debug=debug, thumbnail_dir=thumbnail_dir
+                youtube, file_path, sura_num, debug=debug,
+                thumbnail_dir=thumbnail_dir, metadata_dir=metadata_dir,
             )
             _append_upload_log(UPLOAD_LOG_PATH, sura_num, file_path, video_id)
         except (HttpError, ResumableUploadError) as e:
@@ -606,19 +533,16 @@ if __name__ == "__main__":
     import argparse
     from oauth import youtube as youtube_client
 
-    parser = argparse.ArgumentParser(description="Upload Quran videos with metadata and thumbnails.")
-    parser.add_argument("--video-dir", required=True, help="Directory with video files.")
-    parser.add_argument("--single-sura", type=int, help="Only upload one sura number for testing.")
-    parser.add_argument("--debug", action="store_true", help="Preview request body before upload.")
-    parser.add_argument(
-        "--thumbnail-dir",
-        default=DEFAULT_THUMBNAIL_DIR,
-        help="Directory containing per-sura thumbnails like 001_Al-Fatiha.png.",
-    )
+    parser = argparse.ArgumentParser(description="Bulk-upload videos to YouTube with per-item metadata and thumbnails.")
+    parser.add_argument("--video-dir", required=True, help="Directory containing video files.")
+    parser.add_argument("--thumbnail-dir", required=True, help="Directory with thumbnails named 001_<title>.{png,jpg,webp}.")
+    parser.add_argument("--metadata-dir", default=None, help="Directory with item_NNN.json metadata files (default: metadata_output/ next to script).")
+    parser.add_argument("--single-sura", type=int, help="Upload only one item number (for testing).")
+    parser.add_argument("--debug", action="store_true", help="Preview API request body before upload.")
     parser.add_argument(
         "--ignore-upload-log",
         action="store_true",
-        help="Do not skip already-uploaded suras from upload_log.jsonl (re-uploads everything from the start).",
+        help="Ignore upload_log.jsonl and re-upload already-uploaded items.",
     )
     args = parser.parse_args()
 
@@ -630,4 +554,5 @@ if __name__ == "__main__":
         debug=args.debug,
         ignore_upload_log=args.ignore_upload_log,
         thumbnail_dir=args.thumbnail_dir,
+        metadata_dir=args.metadata_dir,
     )

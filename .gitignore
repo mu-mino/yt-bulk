@@ -1,0 +1,22 @@
+# OAuth credentials — never commit
+OAuth.json
+token.pickle
+
+# Upload state — local only
+upload_log.jsonl
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# IDE
+.idea/
+.vscode/
+
+# Scratch
+tempCodeRunnerFile.python
+Errors.txt

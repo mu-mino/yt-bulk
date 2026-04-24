@@ -1,0 +1,21 @@
+{
+    "localizations": {
+        "en": {
+            "title": "Episode 1 | Your Series | Creator Name",
+            "description": "Watch Episode 1 of Your Series by Creator Name.\n\n#YourTag #Series"
+        },
+        "de": {
+            "title": "Folge 1 | Ihre Serie | Ersteller",
+            "description": "Sehen Sie Folge 1 der Serie.\n\n#IhrTag"
+        }
+    },
+    "tags": [
+        "Episode 1",
+        "Your Series",
+        "Creator Name",
+        "your keyword",
+        "another keyword"
+    ],
+    "default_language": "en",
+    "default_audio_language": "en"
+}
